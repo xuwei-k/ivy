@@ -55,9 +55,7 @@ import org.apache.ivy.plugins.matcher.MapMatcher;
  */
 public class MatcherLookup {
 
-    private static final String FORMAT = "{org:%s, module:%s}";
-
-    private static final String DEFAULT = String.format(FORMAT, "default", "default");
+    private static final String DEFAULT = "{org:default, module:default}";
 
     private Map/* <String, List<MapMatcher>> */lookup = new HashMap();
 
@@ -129,7 +127,7 @@ public class MatcherLookup {
         if (org == null || module == null) {
             return DEFAULT;
         }
-        return String.format(FORMAT, org, module);
+        return "{org:" + org + ", module:" + module + "}";
     }
 
 }
