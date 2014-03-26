@@ -26,6 +26,7 @@ import java.util.Map;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.plugins.matcher.ExactPatternMatcher;
 import org.apache.ivy.plugins.matcher.MapMatcher;
+import org.apache.ivy.plugins.matcher.PatternMatcher;
 
 /**
  * This class targets to speed up lookup for exact pattern matcher by keys, which are created with
@@ -95,12 +96,16 @@ public class MatcherLookup {
      */
     public List get(Map attrs) {
         List matchers = new ArrayList();
-        for (Iterator iter = non_exact_matchers.iterator(); iter.hasNext();) {
-            MapMatcher matcher = (MapMatcher) iter.next();
-            if (matcher.matches(attrs)) {
-                matchers.add(matcher);
+        // Step 1: find matchers from non_exact_matchers list
+        if (!non_exact_matchers.isEmpty()) {
+            for (Iterator iter = non_exact_matchers.iterator(); iter.hasNext();) {
+                MapMatcher matcher = (MapMatcher) iter.next();
+                if (matcher.matches(attrs)) {
+                    matchers.add(matcher);
+                }
             }
         }
+        // Step 2: find matchers from exact_matchers list of key
         Object key = key(attrs);
         List exact_matchers = (List) lookup.get(key);
         if (exact_matchers != null) {
@@ -108,6 +113,18 @@ public class MatcherLookup {
                 MapMatcher matcher = (MapMatcher) iter.next();
                 if (matcher.matches(attrs)) {
                     matchers.add(matcher);
+                }
+            }
+        }
+        // Step 3: (iff key != DEFAULT) find matchers from exact_matchers of DEFAULT
+        if (key != DEFAULT) {
+            List default_exact_matchers = (List) lookup.get(DEFAULT);
+            if (default_exact_matchers != null) {
+                for (Iterator iter = default_exact_matchers.iterator(); iter.hasNext();) {
+                    MapMatcher matcher = (MapMatcher) iter.next();
+                    if (matcher.matches(attrs)) {
+                        matchers.add(matcher);
+                    }
                 }
             }
         }
@@ -124,7 +141,8 @@ public class MatcherLookup {
     private Object key(Map attrs) {
         Object org = attrs.get(IvyPatternHelper.ORGANISATION_KEY);
         Object module = attrs.get(IvyPatternHelper.MODULE_KEY);
-        if (org == null || module == null) {
+        if (org == null || PatternMatcher.ANY_EXPRESSION.equals(org) || module == null
+                || PatternMatcher.ANY_EXPRESSION.equals(module)) {
             return DEFAULT;
         }
         return "{org:" + org + ", module:" + module + "}";
