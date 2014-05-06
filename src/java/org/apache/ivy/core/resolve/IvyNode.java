@@ -101,7 +101,7 @@ public class IvyNode implements Comparable {
 
     private Collection loadedRootModuleConfs = new HashSet();
 
-    private Map loadedDependencies = new HashMap();
+    private Map/* <String, Collection<IvyNode>> */loadedDependencies = new HashMap/*<String, Collection<IvyNode>>*/();
 
     // //////// USAGE DATA
 
