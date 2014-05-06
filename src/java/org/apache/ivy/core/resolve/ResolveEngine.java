@@ -793,6 +793,7 @@ public class ResolveEngine {
 
         // now we can actually resolve this configuration dependencies
         if (!isDependenciesFetched(node.getNode(), conf) && node.isTransitive()) {
+            Message.debug("about to get dependencies for " + node.toString());
             Collection/* <VisitNode> */dependencies = node.getDependencies(conf);
             for (Iterator iter = dependencies.iterator(); iter.hasNext();) {
                 VisitNode dep = (VisitNode) iter.next();

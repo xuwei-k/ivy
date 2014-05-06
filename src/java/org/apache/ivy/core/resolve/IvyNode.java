@@ -101,6 +101,8 @@ public class IvyNode implements Comparable {
 
     private Collection loadedRootModuleConfs = new HashSet();
 
+    private Map/* <String, Collection<IvyNode>> */loadedDependencies = new HashMap/*<String, Collection<IvyNode>>*/();
+
     // //////// USAGE DATA
 
     private IvyNodeUsage usage = new IvyNodeUsage(this);
@@ -327,6 +329,18 @@ public class IvyNode implements Comparable {
             throw new IllegalStateException(
                     "impossible to get dependencies when data has not been loaded");
         }
+        String cacheInput = rootModuleConf + ":" + conf + ":" + requestedConf;
+        if (loadedDependencies.containsKey(cacheInput)) {
+            return (Collection) loadedDependencies.get(cacheInput);
+        } else {
+            Collection cacheOutput = doGetDependencies(rootModuleConf, conf, requestedConf);
+            loadedDependencies.put(cacheInput, cacheOutput);
+            return cacheOutput;
+        }
+    }
+
+    private Collection/* <IvyNode> */doGetDependencies(String rootModuleConf, String conf,
+            String requestedConf) {
         DependencyDescriptor[] dds = md.getDependencies();
         Map/* <ModuleRevisionId, IvyNode> */dependencies = new LinkedHashMap(); // it's important to
                                                                                 // respect order
