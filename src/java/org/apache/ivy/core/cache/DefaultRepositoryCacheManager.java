@@ -79,7 +79,7 @@ public class DefaultRepositoryCacheManager implements RepositoryCacheManager, Iv
 
     private static final String DEFAULT_IVY_PATTERN = "[organisation]/[module](/[branch])/ivy-[revision].xml";
 
-    private static final int DEFAULT_MEMORY_CACHE_SIZE = 150;
+    private static final int DEFAULT_MEMORY_CACHE_SIZE = 1024;
 
     private static MessageDigest SHA_DIGEST;
     static {
