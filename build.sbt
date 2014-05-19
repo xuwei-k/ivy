@@ -2,6 +2,8 @@ import com.typesafe.sbt.SbtGit._
 
 versionWithGit
 
+JavaVersionCheck.javacVersionCheckSettings
+
 // TODO - Read from version.properties
 git.baseVersion := "2.4.0-sbt"
 
