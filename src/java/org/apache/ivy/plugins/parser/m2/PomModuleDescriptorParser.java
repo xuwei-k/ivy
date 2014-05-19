@@ -362,6 +362,7 @@ public final class PomModuleDescriptorParser implements ModuleDescriptorParser {
         DependencyResolver resolver = ivySettings.getResolver(parentModRevID);
         if (resolver == null) {
             // TODO: Throw exception here?
+            Message.warn("Unable to resolve parent/import pom " + parentModRevID);
             return null;
         } else {
             dd = NameSpaceHelper.toSystem(dd, ivySettings.getContextNamespace());
