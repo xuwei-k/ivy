@@ -27,7 +27,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.jar.Manifest;
 
 import org.apache.ivy.Ivy;
 import org.apache.ivy.core.module.descriptor.Artifact;
@@ -37,6 +39,7 @@ import org.apache.ivy.core.module.descriptor.DefaultArtifact;
 import org.apache.ivy.core.module.descriptor.DefaultDependencyDescriptor;
 import org.apache.ivy.core.module.descriptor.DefaultExcludeRule;
 import org.apache.ivy.core.module.descriptor.DefaultModuleDescriptor;
+import org.apache.ivy.core.module.descriptor.ExtraInfoHolder;
 import org.apache.ivy.core.module.id.ArtifactId;
 import org.apache.ivy.core.module.id.ModuleId;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
@@ -68,19 +71,21 @@ public class BundleInfoAdapter {
 
     public static final String EXTRA_INFO_EXPORT_PREFIX = "_osgi_export_";
 
+    public static DefaultModuleDescriptor toModuleDescriptor(ModuleDescriptorParser parser,
+            URI baseUri, BundleInfo bundle, ExecutionEnvironmentProfileProvider profileProvider) {
+        return toModuleDescriptor(parser, baseUri, bundle, null, profileProvider);
+    }
+
     /**
      * 
      * @param baseUri
      *            uri to help build the absolute url if the bundle info has a relative uri.
-     * @param bundle
-     * @param profileProvider
-     * @param parser
      * @return
      * @throws ProfileNotFoundException
      */
     public static DefaultModuleDescriptor toModuleDescriptor(ModuleDescriptorParser parser,
-            URI baseUri, BundleInfo bundle, ExecutionEnvironmentProfileProvider profileProvider)
-            throws ProfileNotFoundException {
+            URI baseUri, BundleInfo bundle, Manifest manifest,
+            ExecutionEnvironmentProfileProvider profileProvider) throws ProfileNotFoundException {
         DefaultModuleDescriptor md = new DefaultModuleDescriptor(parser, null);
         md.addExtraAttributeNamespace("o", Ivy.getIvyHomeURL() + "osgi");
         ModuleRevisionId mrid = asMrid(BundleInfo.BUNDLE_TYPE, bundle.getSymbolicName(),
@@ -94,8 +99,9 @@ public class BundleInfoAdapter {
 
         Set<String> exportedPkgNames = new HashSet<String>(bundle.getExports().size());
         for (ExportPackage exportPackage : bundle.getExports()) {
-            md.getExtraInfo().put(EXTRA_INFO_EXPORT_PREFIX + exportPackage.getName(),
-                exportPackage.getVersion().toString());
+            md.getExtraInfos().add(
+                new ExtraInfoHolder(EXTRA_INFO_EXPORT_PREFIX + exportPackage.getName(),
+                        exportPackage.getVersion().toString()));
             exportedPkgNames.add(exportPackage.getName());
             String[] confDependencies = new String[exportPackage.getUses().size() + 1];
             int i = 0;
@@ -115,8 +121,8 @@ public class BundleInfoAdapter {
                 String type = "jar";
                 String ext = "jar";
                 String packaging = null;
-                if (bundle.hasInnerClasspath()) {
-                    packaging = "zip";
+                if (bundle.hasInnerClasspath() && !bundleArtifact.isSource()) {
+                    packaging = "bundle";
                 }
                 if ("packed".equals(bundleArtifact.getFormat())) {
                     ext = "jar.pack.gz";
@@ -157,6 +163,12 @@ public class BundleInfoAdapter {
                     }
                     md.addExcludeRule(rule);
                 }
+            }
+        }
+
+        if (manifest != null) {
+            for (Entry<Object, Object> entries : manifest.getMainAttributes().entrySet()) {
+                md.addExtraInfo(entries.getKey().toString(), entries.getValue().toString());
             }
         }
 
