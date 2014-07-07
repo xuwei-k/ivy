@@ -3,7 +3,7 @@ import com.typesafe.sbt.SbtGit._
 versionWithGit
 
 // TODO - Read from version.properties
-git.baseVersion := "2.4.0-sbt"
+git.baseVersion := "2.3.0-sbt"
 
 name := "ivy"
 
