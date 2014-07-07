@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -167,6 +168,11 @@ public class DefaultDependencyDescriptor implements DependencyDescriptor {
     private DependencyDescriptor asSystem = this;
     
     private ModuleRevisionId sourceModule;
+
+    /**
+     * Used to cache the result of the doesExclude method.
+     */
+    private Map/*<String,Boolean>*/ doesExcludeCache = new HashMap();
     
     private DefaultDependencyDescriptor(DefaultDependencyDescriptor dd, ModuleRevisionId revision) {
         Checks.checkNotNull(dd, "dd");
@@ -589,6 +595,7 @@ public class DefaultDependencyDescriptor implements DependencyDescriptor {
     }
 
     public void addExcludeRule(String masterConf, ExcludeRule rule) {
+        doesExcludeCache.clear();
         addObjectToConfiguration(masterConf, rule, getExcludeRules());
     }
 
@@ -601,6 +608,16 @@ public class DefaultDependencyDescriptor implements DependencyDescriptor {
         col.add(toAdd);
     }
 
+    private boolean doDoesExclude(String[] moduleConfigurations, ArtifactId artifactId) {
+        ExcludeRule[] rules = getExcludeRules(moduleConfigurations);
+        for (int i = 0; i < rules.length; i++) {
+            if (MatcherHelper.matches(rules[i].getMatcher(), rules[i].getId(), artifactId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * only works when namespace is properly set. The behaviour is not specified if namespace is not
      * set
@@ -610,13 +627,13 @@ public class DefaultDependencyDescriptor implements DependencyDescriptor {
             artifactId = NameSpaceHelper.transform(artifactId, namespace
                     .getFromSystemTransformer());
         }
-        ExcludeRule[] rules = getExcludeRules(moduleConfigurations);
-        for (int i = 0; i < rules.length; i++) {
-            if (MatcherHelper.matches(rules[i].getMatcher(), rules[i].getId(), artifactId)) {
-                return true;
-            }
+        String key = Arrays.toString(moduleConfigurations) + ":" + artifactId.toString();
+        Boolean retval = (Boolean) doesExcludeCache.get(key);
+        if (retval == null) {
+            retval = Boolean.valueOf(doDoesExclude(moduleConfigurations, artifactId));
+            doesExcludeCache.put(key, retval);
         }
-        return false;
+        return retval.booleanValue();
     }
 
     /**
@@ -699,6 +716,7 @@ public class DefaultDependencyDescriptor implements DependencyDescriptor {
     }
 
     private void setExcludeRules(Map excludeRules) {
+        doesExcludeCache.clear();
         this.excludeRules = excludeRules;
     }
 
