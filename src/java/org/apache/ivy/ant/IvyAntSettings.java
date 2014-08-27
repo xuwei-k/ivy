@@ -379,7 +379,7 @@ public class IvyAntSettings extends DataType {
         CredentialsStore.INSTANCE.addCredentials(getRealm(), getHost(), getUsername(), getPasswd());
 
         URLHandlerDispatcher dispatcher = new URLHandlerDispatcher();
-        URLHandler httpHandler = URLHandlerRegistry.getHttp();
+        URLHandler httpHandler = URLHandlerRegistry.getDefault();
         dispatcher.setDownloader("http", httpHandler);
         dispatcher.setDownloader("https", httpHandler);
         URLHandlerRegistry.setDefault(dispatcher);

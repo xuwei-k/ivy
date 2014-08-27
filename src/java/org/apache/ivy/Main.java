@@ -519,7 +519,7 @@ public final class Main {
         CredentialsStore.INSTANCE.addCredentials(realm, host, username, passwd);
 
         URLHandlerDispatcher dispatcher = new URLHandlerDispatcher();
-        URLHandler httpHandler = URLHandlerRegistry.getHttp();
+        URLHandler httpHandler = URLHandlerRegistry.getDefault();
         dispatcher.setDownloader("http", httpHandler);
         dispatcher.setDownloader("https", httpHandler);
         URLHandlerRegistry.setDefault(dispatcher);
