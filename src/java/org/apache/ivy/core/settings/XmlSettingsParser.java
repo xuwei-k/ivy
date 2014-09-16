@@ -382,9 +382,9 @@ public class XmlSettingsParser extends DefaultHandler {
         
         String requestMethod = (String) attributes.get("httpRequestMethod");
         if ("head".equalsIgnoreCase(requestMethod)) {
-            URLHandlerRegistry.getHttp().setRequestMethod(URLHandler.REQUEST_METHOD_HEAD);
+            URLHandlerRegistry.getDefault().setRequestMethod(URLHandler.REQUEST_METHOD_HEAD);
         } else if ("get".equalsIgnoreCase(requestMethod)) {
-            URLHandlerRegistry.getHttp().setRequestMethod(URLHandler.REQUEST_METHOD_GET);
+            URLHandlerRegistry.getDefault().setRequestMethod(URLHandler.REQUEST_METHOD_GET);
         } else if ((requestMethod != null) && (requestMethod.trim().length() > 0)) {
             throw new IllegalArgumentException("Invalid httpRequestMethod specified, must be " 
                 + "one of {'HEAD', 'GET'}");
