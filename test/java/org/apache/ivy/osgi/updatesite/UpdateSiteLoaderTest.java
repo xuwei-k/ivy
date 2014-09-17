@@ -63,7 +63,7 @@ public class UpdateSiteLoaderTest extends TestCase {
         }
     }
 
-    public void testM2Eclipse() throws IOException, ParseException, SAXException,
+    public void disabled_testM2Eclipse() throws IOException, ParseException, SAXException,
             URISyntaxException {
         RepoDescriptor site = loader.load(new URI("http://m2eclipse.sonatype.org/sites/m2e/"));
         assertTrue(site.getModules().size() > 50);
