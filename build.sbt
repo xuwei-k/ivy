@@ -6,10 +6,23 @@ lazy val makeModuleProperties = taskKey[Seq[File]]("Create module.properties fil
 lazy val root = (project in file(".")).
   settings(versionWithGit: _*).
   settings(
+    inThisBuild(Seq(
+      organization := "org.scala-sbt.ivy",
+      homepage := Some(url("https://github.com/sbt/ivy")),
+      description := "patched Ivy for sbt",
+      licenses := List("Apache-2.0" -> url("https://github.com/sbt/ivy/blob/2.3.x-sbt/LICENSE")),
+      scmInfo := Some(ScmInfo(url("https://github.com/sbt/ivy"), "git@github.com:sbt/ivy.git")),
+      developers := List(
+        Developer("eed3si9n", "Eugene Yokota", "@eed3si9n", url("https://github.com/eed3si9n"))
+      ),
+      bintrayReleaseOnPublish := false,
+      bintrayOrganization := Some("sbt"),
+      bintrayRepository := "maven-releases",
+      bintrayPackage := "ivy"
+    )),
     // TODO - Read from version.properties
     git.baseVersion := "2.3.0-sbt",
     name := "ivy",
-    organization := "org.scala-sbt.ivy",
     unmanagedSourceDirectories in Compile := Seq(
       baseDirectory.value / "src" / "java"
     ),
@@ -55,7 +68,6 @@ lazy val root = (project in file(".")).
     autoScalaLibrary := false,
     crossPaths := false,
     javaVersionPrefix in javaVersionCheck := Some("1.6"),
-    // TODO - publish settings
-    publishMavenStyle := false,
-    publishTo := Some(Resolver.url("publish-typesafe-releases", url("http://private-repo.typesafe.com/typesafe/ivy-releases"))(Resolver.ivyStylePatterns))
+    bintrayPackage := (bintrayPackage in ThisBuild).value,
+    bintrayRepository := (bintrayRepository in ThisBuild).value
   )
