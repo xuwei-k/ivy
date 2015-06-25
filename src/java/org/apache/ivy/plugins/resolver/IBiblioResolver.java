@@ -495,7 +495,8 @@ public class IBiblioResolver extends URLResolver {
     }
 
     private boolean shouldUseMavenMetadata(String pattern) {
-        return isUseMavenMetadata() && isM2compatible() && pattern.endsWith(M2_PATTERN);
+        // pattern is customized on the resolvers converted by sbt.
+        return isUseMavenMetadata() && isM2compatible(); // && pattern.endsWith(M2_PATTERN);
     }
 
 
