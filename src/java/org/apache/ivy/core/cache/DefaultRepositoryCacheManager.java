@@ -23,6 +23,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -32,6 +33,7 @@ import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DefaultArtifact;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
+import org.apache.ivy.core.module.descriptor.MDArtifact;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.apache.ivy.core.module.id.ModuleRules;
@@ -1218,6 +1220,19 @@ public class DefaultRepositoryCacheManager implements RepositoryCacheManager, Iv
                             if (!prepAndDeleteArtifact(arts[j], options, backupDownloader)) return null;
                         }
                     }
+
+                    final Artifact sourceArtifact = new MDArtifact(md, mrid.getName(), "src", "jar", null,
+                        Collections.singletonMap("m:classifier", "sources"));
+
+                    final Artifact srcArtifact = new MDArtifact(md, mrid.getName(), "src", "jar", null,
+                        Collections.singletonMap("m:classifier", "src"));
+
+                    final Artifact javadocArtifact = new MDArtifact(md, mrid.getName(), "doc", "jar", null,
+                        Collections.singletonMap("m:classifier", "javadoc"));
+
+                    if (!prepAndDeleteArtifact(sourceArtifact,  options, backupDownloader)) return null;
+                    if (!prepAndDeleteArtifact(srcArtifact,     options, backupDownloader)) return null;
+                    if (!prepAndDeleteArtifact(javadocArtifact, options, backupDownloader)) return null;
                 } else if (isChanging(dd, mrid, options)) {
                     Message.verbose(mrid
                         + " is changing, but has not changed: will trust cached artifacts if any");
