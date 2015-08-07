@@ -1215,24 +1215,7 @@ public class DefaultRepositoryCacheManager implements RepositoryCacheManager, Iv
                     for (int i = 0; i < confs.length; i++) {
                         Artifact[] arts = md.getArtifacts(confs[i]);
                         for (int j = 0; j < arts.length; j++) {
-                            Artifact transformedArtifact = NameSpaceHelper.transform(
-                                arts[j], options.getNamespace().getToSystemTransformer());
-                            ArtifactOrigin origin = getSavedArtifactOrigin(
-                                transformedArtifact);
-                            File artFile = getArchiveFileInCache(
-                                transformedArtifact, origin, false);
-                            if (artFile.exists()) {
-                                Message.debug("deleting " + artFile);
-                                if (!artFile.delete()) {
-                                    // Old artifacts couldn't get deleted!
-                                    // Restore the original ivy file so the next time we
-                                    // resolve the old artifacts are deleted again
-                                    backupDownloader.restore();
-                                    Message.error("Couldn't delete outdated artifact from cache: " + artFile);
-                                    return null;
-                                }
-                            }
-                            removeSavedArtifactOrigin(transformedArtifact);
+                            if (!prepAndDeleteArtifact(arts[j], options, backupDownloader)) return null;
                         }
                     }
                 } else if (isChanging(dd, mrid, options)) {
@@ -1357,7 +1340,28 @@ public class DefaultRepositoryCacheManager implements RepositoryCacheManager, Iv
         }
         return isCheckmodified();
     }
-    
+
+    private boolean prepAndDeleteArtifact(final Artifact artifact, final CacheMetadataOptions options,
+                                          final BackupResourceDownloader backupDownloader) throws IOException {
+        final Artifact transformedArtifact =
+            NameSpaceHelper.transform(artifact, options.getNamespace().getToSystemTransformer());
+        final ArtifactOrigin origin = getSavedArtifactOrigin(transformedArtifact);
+        final File artFile = getArchiveFileInCache(transformedArtifact, origin, false);
+        if (artFile.exists()) {
+            Message.debug("deleting " + artFile);
+            if (!artFile.delete()) {
+                // Old artifacts couldn't get deleted!
+                // Restore the original ivy file so the next time we
+                // resolve the old artifacts are deleted again
+                backupDownloader.restore();
+                Message.error("Couldn't delete outdated artifact from cache: " + artFile);
+                return false;
+            }
+        }
+        removeSavedArtifactOrigin(transformedArtifact);
+        return true;
+    }
+
     public void clean() {
         FileUtil.forceDelete(getBasedir());
     }
