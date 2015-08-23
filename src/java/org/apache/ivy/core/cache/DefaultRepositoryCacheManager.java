@@ -1221,6 +1221,24 @@ public class DefaultRepositoryCacheManager implements RepositoryCacheManager, Iv
                         }
                     }
 
+                    // sbt change, driven by https://github.com/sbt/sbt/issues/1750
+                    //
+                    // Typically Ivy behaviour, in the parsing above
+                    // (with ModuleDescriptorParser & PomModuleDescriptorBuilder),
+                    // involves making remote calls to locate sources and javadoc jars on the remote repository
+                    // and storing them in the ModuleDescriptor.
+                    //
+                    // However given a number of dependencies and resolver this suffers in performance,
+                    // particurlarly Ivy's lack of caching for not finding artifacts or IO failures.
+                    //
+                    // So sbt overrides this behaviour by failing fast (returning null).
+                    // See IvySbt.hasImplicitClassifier.
+                    //
+                    // This however has the side-effect that sources and javadoc jars aren't deleted here
+                    // so that they can be re-downloaded.
+                    //
+                    // So we keep the performance overrides and just delete those jars directly below.
+
                     final Artifact sourceArtifact = new MDArtifact(md, mrid.getName(), "src", "jar", null,
                         Collections.singletonMap("m:classifier", "sources"));
 
@@ -1233,6 +1251,9 @@ public class DefaultRepositoryCacheManager implements RepositoryCacheManager, Iv
                     if (!prepAndDeleteArtifact(sourceArtifact,  options, backupDownloader)) return null;
                     if (!prepAndDeleteArtifact(srcArtifact,     options, backupDownloader)) return null;
                     if (!prepAndDeleteArtifact(javadocArtifact, options, backupDownloader)) return null;
+
+                    // end of sbt change
+
                 } else if (isChanging(dd, mrid, options)) {
                     Message.verbose(mrid
                         + " is changing, but has not changed: will trust cached artifacts if any");
