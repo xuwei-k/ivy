@@ -23,6 +23,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -32,6 +33,7 @@ import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DefaultArtifact;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
+import org.apache.ivy.core.module.descriptor.MDArtifact;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.apache.ivy.core.module.id.ModuleRules;
@@ -1215,26 +1217,43 @@ public class DefaultRepositoryCacheManager implements RepositoryCacheManager, Iv
                     for (int i = 0; i < confs.length; i++) {
                         Artifact[] arts = md.getArtifacts(confs[i]);
                         for (int j = 0; j < arts.length; j++) {
-                            Artifact transformedArtifact = NameSpaceHelper.transform(
-                                arts[j], options.getNamespace().getToSystemTransformer());
-                            ArtifactOrigin origin = getSavedArtifactOrigin(
-                                transformedArtifact);
-                            File artFile = getArchiveFileInCache(
-                                transformedArtifact, origin, false);
-                            if (artFile.exists()) {
-                                Message.debug("deleting " + artFile);
-                                if (!artFile.delete()) {
-                                    // Old artifacts couldn't get deleted!
-                                    // Restore the original ivy file so the next time we
-                                    // resolve the old artifacts are deleted again
-                                    backupDownloader.restore();
-                                    Message.error("Couldn't delete outdated artifact from cache: " + artFile);
-                                    return null;
-                                }
-                            }
-                            removeSavedArtifactOrigin(transformedArtifact);
+                            if (!prepAndDeleteArtifact(arts[j], options, backupDownloader)) return null;
                         }
                     }
+
+                    // sbt change, driven by https://github.com/sbt/sbt/issues/1750
+                    //
+                    // Typically Ivy behaviour, in the parsing above
+                    // (with ModuleDescriptorParser & PomModuleDescriptorBuilder),
+                    // involves making remote calls to locate sources and javadoc jars on the remote repository
+                    // and storing them in the ModuleDescriptor.
+                    //
+                    // However given a number of dependencies and resolver this suffers in performance,
+                    // particurlarly Ivy's lack of caching for not finding artifacts or IO failures.
+                    //
+                    // So sbt overrides this behaviour by failing fast (returning null).
+                    // See IvySbt.hasImplicitClassifier.
+                    //
+                    // This however has the side-effect that sources and javadoc jars aren't deleted here
+                    // so that they can be re-downloaded.
+                    //
+                    // So we keep the performance overrides and just delete those jars directly below.
+
+                    final Artifact sourceArtifact = new MDArtifact(md, mrid.getName(), "src", "jar", null,
+                        Collections.singletonMap("m:classifier", "sources"));
+
+                    final Artifact srcArtifact = new MDArtifact(md, mrid.getName(), "src", "jar", null,
+                        Collections.singletonMap("m:classifier", "src"));
+
+                    final Artifact javadocArtifact = new MDArtifact(md, mrid.getName(), "doc", "jar", null,
+                        Collections.singletonMap("m:classifier", "javadoc"));
+
+                    if (!prepAndDeleteArtifact(sourceArtifact,  options, backupDownloader)) return null;
+                    if (!prepAndDeleteArtifact(srcArtifact,     options, backupDownloader)) return null;
+                    if (!prepAndDeleteArtifact(javadocArtifact, options, backupDownloader)) return null;
+
+                    // end of sbt change
+
                 } else if (isChanging(dd, mrid, options)) {
                     Message.verbose(mrid
                         + " is changing, but has not changed: will trust cached artifacts if any");
@@ -1357,7 +1376,28 @@ public class DefaultRepositoryCacheManager implements RepositoryCacheManager, Iv
         }
         return isCheckmodified();
     }
-    
+
+    private boolean prepAndDeleteArtifact(final Artifact artifact, final CacheMetadataOptions options,
+                                          final BackupResourceDownloader backupDownloader) throws IOException {
+        final Artifact transformedArtifact =
+            NameSpaceHelper.transform(artifact, options.getNamespace().getToSystemTransformer());
+        final ArtifactOrigin origin = getSavedArtifactOrigin(transformedArtifact);
+        final File artFile = getArchiveFileInCache(transformedArtifact, origin, false);
+        if (artFile.exists()) {
+            Message.debug("deleting " + artFile);
+            if (!artFile.delete()) {
+                // Old artifacts couldn't get deleted!
+                // Restore the original ivy file so the next time we
+                // resolve the old artifacts are deleted again
+                backupDownloader.restore();
+                Message.error("Couldn't delete outdated artifact from cache: " + artFile);
+                return false;
+            }
+        }
+        removeSavedArtifactOrigin(transformedArtifact);
+        return true;
+    }
+
     public void clean() {
         FileUtil.forceDelete(getBasedir());
     }
