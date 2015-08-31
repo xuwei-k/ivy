@@ -1239,18 +1239,22 @@ public class DefaultRepositoryCacheManager implements RepositoryCacheManager, Iv
                     //
                     // So we keep the performance overrides and just delete those jars directly below.
 
-                    final Artifact sourceArtifact = new MDArtifact(md, mrid.getName(), "src", "jar", null,
-                        Collections.singletonMap("m:classifier", "sources"));
+                    if ("true".equals(
+                        settings.substitute("${alwaysDeleteSourcesAndJavadocJarsOnChangedModuleDescriptor}")
+                    )) {
+                        final Artifact sourceArtifact = new MDArtifact(md, mrid.getName(), "src", "jar", null,
+                            Collections.singletonMap("m:classifier", "sources"));
 
-                    final Artifact srcArtifact = new MDArtifact(md, mrid.getName(), "src", "jar", null,
-                        Collections.singletonMap("m:classifier", "src"));
+                        final Artifact srcArtifact = new MDArtifact(md, mrid.getName(), "src", "jar", null,
+                            Collections.singletonMap("m:classifier", "src"));
 
-                    final Artifact javadocArtifact = new MDArtifact(md, mrid.getName(), "doc", "jar", null,
-                        Collections.singletonMap("m:classifier", "javadoc"));
+                        final Artifact javadocArtifact = new MDArtifact(md, mrid.getName(), "doc", "jar", null,
+                            Collections.singletonMap("m:classifier", "javadoc"));
 
-                    if (!prepAndDeleteArtifact(sourceArtifact,  options, backupDownloader)) return null;
-                    if (!prepAndDeleteArtifact(srcArtifact,     options, backupDownloader)) return null;
-                    if (!prepAndDeleteArtifact(javadocArtifact, options, backupDownloader)) return null;
+                        if (!prepAndDeleteArtifact(sourceArtifact,  options, backupDownloader)) return null;
+                        if (!prepAndDeleteArtifact(srcArtifact,     options, backupDownloader)) return null;
+                        if (!prepAndDeleteArtifact(javadocArtifact, options, backupDownloader)) return null;
+                    }
 
                     // end of sbt change
 
