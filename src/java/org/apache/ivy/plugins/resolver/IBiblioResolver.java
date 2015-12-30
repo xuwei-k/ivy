@@ -209,10 +209,8 @@ public class IBiblioResolver extends URLResolver {
                                 super.endElement(uri, localName, qName);
                             }
                         }, null);
-                        if (localCopy.length() > 0) {
-                            if (localCopy.toString() == "true") {
-                                return mrid.getRevision();
-                            }
+                        if (localCopy.toString() == "true") {
+                            return mrid.getRevision();
                         }
                     } else {
                         Message.verbose("\tmaven-metadata and maven-metadata-local not available: " + metadata);
