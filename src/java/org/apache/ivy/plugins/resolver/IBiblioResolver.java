@@ -191,7 +191,32 @@ public class IBiblioResolver extends URLResolver {
                         
                         return rev;
                     }
-                } else {
+                } else if (root.startsWith("file:")) {
+                    // sbt change, driven by https://github.com/sbt/sbt/issues/1616
+                    String metadataLocalLocation = IvyPatternHelper.substitute(
+                    root + "[organisation]/[module]/[revision]/maven-metadata-local.xml", mrid);
+                    Resource metadataLocal = getRepository().getResource(metadataLocalLocation);
+                    if (metadataLocal.exists()) {
+                        Message.verbose("maven-metadata-local found: " + metadataLocal);
+                        metadataStream = metadataLocal.openStream();
+                        final StringBuffer localCopy = new StringBuffer();
+                        XMLHelper.parse(metadataStream, null, new ContextualSAXHandler() {
+                            public void endElement(String uri, String localName, String qName)
+                                    throws SAXException {
+                                if ("metadata/versioning/snapshot/localCopy".equals(getContext())) {
+                                    localCopy.append(getText());
+                                }
+                                super.endElement(uri, localName, qName);
+                            }
+                        }, null);
+                        if (localCopy.toString() == "true") {
+                            return mrid.getRevision();
+                        }
+                    } else {
+                        Message.verbose("\tmaven-metadata and maven-metadata-local not available: " + metadata);
+                    }
+                }
+                else {
                     Message.verbose("\tmaven-metadata not available: " + metadata);
                 }
             } catch (IOException e) {
