@@ -440,6 +440,7 @@ public abstract class AbstractResolver
             .setCheckmodified(data.getOptions().isUseCacheOnly() ? Boolean.FALSE : checkmodified)
             .setValidate(doValidate(data))
             .setNamespace(getNamespace())
+            .setUseCacheOnly(data.getOptions().isUseCacheOnly())
             .setForce(data.getOptions().isRefresh())
             .setListener(getDownloadListener(getDownloadOptions(data.getOptions())));
     }
