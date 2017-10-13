@@ -50,15 +50,7 @@ public final class IvyAuthenticator extends Authenticator {
         // We will try to use the original authenticator as backup authenticator. 
         // Since there is no getter available, so try to use some reflection to 
         // obtain it. If that doesn't work, assume there is no original authenticator
-        Authenticator original = null;
-        
-        try {
-            Field f = Authenticator.class.getDeclaredField("theAuthenticator");
-            f.setAccessible(true);
-            original = (Authenticator) f.get(null);
-        } catch (Throwable t) {
-            Message.debug("Error occurred while getting the original authenticator: " + t.getMessage());            
-        }
+        final Authenticator original = getOriginalAuthenticator();
 
         if (!(original instanceof IvyAuthenticator)) {
             try {
@@ -152,6 +144,17 @@ public final class IvyAuthenticator extends Authenticator {
         // fallback to the Ivy 2.2.0 behavior
         String proxyHost = System.getProperty("http.proxyHost");
         return getRequestingHost().equals(proxyHost);
+    }
+
+    private static Authenticator getOriginalAuthenticator() {
+        try {
+            final Field f = Authenticator.class.getDeclaredField("theAuthenticator");
+            f.setAccessible(true);
+            return (Authenticator) f.get(null);
+        } catch (final Throwable t) {
+            Message.debug("Error occurred while getting the original authenticator: " + t.getMessage());
+            return null;
+        }
     }
 
 }
