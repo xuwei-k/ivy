@@ -18,6 +18,7 @@
 package org.apache.ivy.util.url;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
@@ -147,14 +148,55 @@ public final class IvyAuthenticator extends Authenticator {
     }
 
     private static Authenticator getOriginalAuthenticator() {
+        if (isJavaVersion9Plus()) return getDefaultAuthenticator(); else return getTheAuthenticator();
+    }
+
+    private static Authenticator getTheAuthenticator() {
         try {
             final Field f = Authenticator.class.getDeclaredField("theAuthenticator");
             f.setAccessible(true);
             return (Authenticator) f.get(null);
-        } catch (final Throwable t) {
-            Message.debug("Error occurred while getting the original authenticator: " + t.getMessage());
-            return null;
+        } catch (final ReflectiveOperationException e) {
+            handleReflectionException(e);
+        } catch (final RuntimeException e) {
+            handleReflectionException0(e);
         }
+        return null;
+    }
+
+    private static Authenticator getDefaultAuthenticator() {
+        try {
+            final Method m = Authenticator.class.getDeclaredMethod("getDefault");
+            return (Authenticator) m.invoke(null);
+        } catch (final ReflectiveOperationException e) {
+            handleReflectionException(e);
+        } catch (final RuntimeException e) {
+            handleReflectionException0(e);
+        }
+        return null;
+    }
+
+    private static void handleReflectionException0(final RuntimeException e) {
+        try {
+            throw e;
+        } catch (final SecurityException | ExceptionInInitializerError | IllegalArgumentException | ClassCastException | NullPointerException e) {
+            handleReflectionException(e);
+        }
+    }
+
+
+    private static void handleReflectionException(final Throwable t) {
+        Message.debug("Error occurred while getting the original authenticator: " + t.getMessage());
+    }
+
+    private static boolean isJavaVersion9Plus() { return getJavaVersion() > 8; }
+    private static int getJavaVersion() {
+        // See Oracle section 1.5.3 at:
+        // https://docs.oracle.com/javase/8/docs/technotes/guides/versioning/spec/versioning2.html
+        final String[] version = System.getProperty("java.specification.version").split("\\.");
+        final int version0 = Integer.parseInt(version[0]);
+        final int version1 = Integer.parseInt(version[1]);
+        return version0 == 1 ? version1 : version0;
     }
 
 }
