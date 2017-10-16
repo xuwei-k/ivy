@@ -156,7 +156,9 @@ public final class IvyAuthenticator extends Authenticator {
             final Field f = Authenticator.class.getDeclaredField("theAuthenticator");
             f.setAccessible(true);
             return (Authenticator) f.get(null);
-        } catch (final ReflectiveOperationException e) {
+        } catch (final NoSuchFieldException e) {
+            handleReflectionException(e);
+        } catch (final IllegalAccessException e) {
             handleReflectionException(e);
         } catch (final RuntimeException e) {
             handleReflectionException0(e);
@@ -168,7 +170,11 @@ public final class IvyAuthenticator extends Authenticator {
         try {
             final Method m = Authenticator.class.getDeclaredMethod("getDefault");
             return (Authenticator) m.invoke(null);
-        } catch (final ReflectiveOperationException e) {
+        } catch (final NoSuchMethodException e) {
+            handleReflectionException(e);
+        } catch (final InvocationTargetException e) {
+            handleReflectionException(e);
+        } catch (final IllegalAccessException e) {
             handleReflectionException(e);
         } catch (final RuntimeException e) {
             handleReflectionException0(e);
@@ -176,14 +182,21 @@ public final class IvyAuthenticator extends Authenticator {
         return null;
     }
 
-    private static void handleReflectionException0(final RuntimeException e) {
+    private static void handleReflectionException0(final RuntimeException e0) {
         try {
-            throw e;
-        } catch (final SecurityException | ExceptionInInitializerError | IllegalArgumentException | ClassCastException | NullPointerException e) {
+            throw e0;
+        } catch (final SecurityException e) {
+            handleReflectionException(e);
+        } catch (final ExceptionInInitializerError e) {
+            handleReflectionException(e);
+        } catch (final IllegalArgumentException e) {
+            handleReflectionException(e);
+        } catch (final ClassCastException e) {
+            handleReflectionException(e);
+        } catch (final NullPointerException e) {
             handleReflectionException(e);
         }
     }
-
 
     private static void handleReflectionException(final Throwable t) {
         Message.debug("Error occurred while getting the original authenticator: " + t.getMessage());
