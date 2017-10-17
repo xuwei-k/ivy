@@ -14,6 +14,12 @@ cache:
 addons:
   hosts: workaround-travis-ci-issue-5227
   hostname: workaround-travis-ci-issue-5227
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - ant
+      - ant-optional
 
 language: java
 jdk:
