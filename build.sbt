@@ -52,8 +52,8 @@ lazy val root = (project in file(".")).
       Seq(file)
     },
     // TODO - copy ivysettings to ivyconf files for backwards compatibility.
-    resourceGenerators in Compile <+= copyLicenseFiles,
-    resourceGenerators in Compile <+= makeModuleProperties,
+    resourceGenerators in Compile += copyLicenseFiles.taskValue,
+    resourceGenerators in Compile += makeModuleProperties.taskValue,
     libraryDependencies ++=
       Seq(
         "org.apache.ant" %"ant-nodeps" % "1.7.1" % "provided",

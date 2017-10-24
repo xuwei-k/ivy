@@ -232,7 +232,11 @@ public class ResolveReport {
         for (Iterator iter = dependencies.iterator(); iter.hasNext();) {
             IvyNode dependency = (IvyNode) iter.next();
             if (!dependency.isCompletelyEvicted() && !dependency.hasProblem()) {
-                artifacts.addAll(Arrays.asList(dependency.getSelectedArtifacts(artifactFilter)));
+                try {
+                    artifacts.addAll(Arrays.asList(dependency.getSelectedArtifacts(artifactFilter)));
+                } catch (Exception e) {
+                    // e.printStackTrace();
+                }
             }
             // update the configurations reports with the dependencies
             // these reports will be completed later with download information, if any
