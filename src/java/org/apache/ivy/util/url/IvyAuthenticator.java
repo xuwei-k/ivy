@@ -208,8 +208,7 @@ public final class IvyAuthenticator extends Authenticator {
         // https://docs.oracle.com/javase/8/docs/technotes/guides/versioning/spec/versioning2.html
         final String[] version = System.getProperty("java.specification.version").split("\\.");
         final int version0 = Integer.parseInt(version[0]);
-        final int version1 = Integer.parseInt(version[1]);
-        return version0 == 1 ? version1 : version0;
+        return version0 == 1 ? Integer.parseInt(version[1]) : version0;
     }
 
 }
