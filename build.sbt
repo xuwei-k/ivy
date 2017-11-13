@@ -1,10 +1,8 @@
-import com.typesafe.sbt.SbtGit._
 
 lazy val copyLicenseFiles = taskKey[Seq[File]]("copies needed files for jar.")
 lazy val makeModuleProperties = taskKey[Seq[File]]("Create module.properties file.")
 
 lazy val root = (project in file(".")).
-  settings(versionWithGit: _*).
   settings(
     inThisBuild(Seq(
       organization := "org.scala-sbt.ivy",
@@ -15,13 +13,7 @@ lazy val root = (project in file(".")).
       developers := List(
         Developer("eed3si9n", "Eugene Yokota", "@eed3si9n", url("https://github.com/eed3si9n"))
       ),
-      bintrayReleaseOnPublish := false,
-      bintrayOrganization := Some("sbt"),
-      bintrayRepository := "maven-releases",
-      bintrayPackage := "ivy"
     )),
-    // TODO - Read from version.properties
-    git.baseVersion := "2.3.0-sbt",
     name := "ivy",
     unmanagedSourceDirectories in Compile := Seq(
       baseDirectory.value / "src" / "java"
@@ -67,7 +59,4 @@ lazy val root = (project in file(".")).
       ),
     autoScalaLibrary := false,
     crossPaths := false,
-    javaVersionPrefix in javaVersionCheck := Some("1.6"),
-    bintrayPackage := (bintrayPackage in ThisBuild).value,
-    bintrayRepository := (bintrayRepository in ThisBuild).value
   )
